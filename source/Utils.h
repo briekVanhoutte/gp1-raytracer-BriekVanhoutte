@@ -3,18 +3,51 @@
 #include <fstream>
 #include "Math.h"
 #include "DataTypes.h"
+#include <math.h>
 
+#include <iostream>
 namespace dae
 {
 	namespace GeometryUtils
 	{
 #pragma region Sphere HitTest
 		//SPHERE HIT-TESTS
+		inline bool hitTestSphereAnalytical(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord)
+		{
+			float d = std::powf(Vector3::Dot((2 * ray.direction), (ray.origin - sphere.origin)), 2.f) - 4 * Vector3::Dot(ray.direction, ray.direction) * (Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius));
+
+			if (d < 0) {
+				return false;
+			}
+
+
+			float t0{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+
+			if (t0 > ray.min && t0 < ray.max) {
+				if (hitRecord.t > t0) {
+					hitRecord.materialIndex = sphere.materialIndex;
+					hitRecord.didHit = true;
+					hitRecord.t = t0;
+				}
+				return true;
+			}
+
+			float t1{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+			if (t1 > ray.min && t1 < ray.max) {
+				if (hitRecord.t > t1) {
+					hitRecord.materialIndex = sphere.materialIndex;
+					hitRecord.didHit = true;
+					hitRecord.t = t1;
+				}
+				return true;
+			}
+
+			return true;
+		}
+
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			assert(false && "No Implemented Yet!");
-			return false;
+			return hitTestSphereAnalytical(sphere, ray, hitRecord);
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
@@ -27,8 +60,24 @@ namespace dae
 		//PLANE HIT-TESTS
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			assert(false && "No Implemented Yet!");
+			//check if plane is not seen from side perfectly
+			if (Vector3::Dot(ray.direction, plane.normal) != 0)
+			{
+				float t{};
+				t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+
+				if (t>ray.min && t<ray.max)
+				{
+					if (hitRecord.t > t)
+					{
+						hitRecord.t = t;
+						hitRecord.didHit = true;
+						hitRecord.materialIndex = plane.materialIndex;
+						return true;
+					}
+				}
+			}
+
 			return false;
 		}
 
@@ -128,7 +177,7 @@ namespace dae
 				//read till end of line and ignore all remaining chars
 				file.ignore(1000, '\n');
 
-				if (file.eof()) 
+				if (file.eof())
 					break;
 			}
 
@@ -143,7 +192,7 @@ namespace dae
 				Vector3 edgeV0V2 = positions[i2] - positions[i0];
 				Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2);
 
-				if(isnan(normal.x))
+				if (isnan(normal.x))
 				{
 					int k = 0;
 				}

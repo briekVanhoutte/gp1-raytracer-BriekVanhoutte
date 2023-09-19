@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "Utils.h"
 #include "Material.h"
-
+#include <algorithm>
 namespace dae {
 
 #pragma region Base Scene
@@ -28,8 +28,14 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
-		//todo W1
-		assert(false && "No Implemented Yet!");
+		std::for_each(m_SphereGeometries.begin(), m_SphereGeometries.end(), [&ray,&closestHit](const Sphere& s) {
+			GeometryUtils::HitTest_Sphere(s, ray, closestHit);
+		});
+
+		std::for_each(m_PlaneGeometries.begin(), m_PlaneGeometries.end(), [&ray, &closestHit](const Plane& p) {
+			GeometryUtils::HitTest_Plane(p, ray, closestHit);
+		});
+
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const

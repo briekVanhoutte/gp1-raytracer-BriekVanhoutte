@@ -23,6 +23,9 @@ namespace dae
 		void Render(Scene* pScene) const;
 		bool SaveBufferToImage() const;
 
+		void RenderGradient(int px, int py) const;
+		void ShootRayEachPixel(int px, int py, Scene* pScene) const;
+
 	private:
 		SDL_Window* m_pWindow{};
 
