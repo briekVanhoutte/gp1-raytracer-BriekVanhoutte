@@ -31,16 +31,37 @@ void Renderer::Render(Scene* pScene) const
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
-			float aspect = m_Width / m_Height;
+			// calc aspect ratio width over height
+			float aspect =float( m_Width) / float(m_Height);
 
-			Vector3 rayDirection(camera.origin, {(((2*(px+0.5f))/m_Width)-1)*aspect ,
-												(1-(2*(py+0.5f))/m_Height),
+			/*
+				calc direction of ray for every pixel from camera location to pixel pixel location
+				pixel location calculated based on center of pixel +0.5f, and camera needs to look at center of the screen so some shenanigans to make that work
+			*/ 
+
+			Vector3 rayDirection(camera.origin, {(2 * ( ( (px + 0.5f) ) / m_Width )-1) * aspect ,
+												(1 - 2 * ( ( py + 0.5f ) ) / m_Height),
 												 0.7f });
 			
 			rayDirection.Normalize();
 
-			Ray hitRay({ 0,0,0 }, rayDirection);
-			ColorRGB finalColor{ rayDirection.x,rayDirection.y,rayDirection.z };
+			Ray viewRay({ 0,0,0 }, rayDirection);
+
+			ColorRGB finalColor{};
+			HitRecord closestHit{};
+
+			Sphere testSphere{ {0.f,0.f,100.f},50.f,0 };
+
+			GeometryUtils::HitTest_Sphere(testSphere, viewRay, closestHit);
+
+			if (closestHit.didHit)
+			{
+				const float scaled_t = (closestHit.t - 50.f) / 40.f;
+				{
+					finalColor = materials[closestHit.materialIndex]->Shade();
+				}
+			}
+
 			finalColor.MaxToOne();
 
 			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,

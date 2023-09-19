@@ -3,18 +3,41 @@
 #include <fstream>
 #include "Math.h"
 #include "DataTypes.h"
+#include <math.h>
 
+#include <iostream>
 namespace dae
 {
 	namespace GeometryUtils
 	{
 #pragma region Sphere HitTest
 		//SPHERE HIT-TESTS
+		inline bool hitTestSphereAnalytical(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord)
+		{
+			float d = std::powf(Vector3::Dot((2 * ray.direction), (ray.origin - sphere.origin)), 2.f) - 4 * Vector3::Dot(ray.direction, ray.direction) * (Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius));
+
+			if (d < 0) {
+				return false;
+			}
+			hitRecord.materialIndex = sphere.materialIndex;
+			hitRecord.didHit = true;
+
+			float t0{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+
+			if (t0 > ray.min && t0 < ray.max) {
+				hitRecord.t = t0;
+				return true;
+			}
+
+			float t2{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+			hitRecord.t = t2;
+
+			return true;
+		}
+
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			assert(false && "No Implemented Yet!");
-			return false;
+			return hitTestSphereAnalytical(sphere, ray, hitRecord);
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
@@ -128,7 +151,7 @@ namespace dae
 				//read till end of line and ignore all remaining chars
 				file.ignore(1000, '\n');
 
-				if (file.eof()) 
+				if (file.eof())
 					break;
 			}
 
@@ -143,7 +166,7 @@ namespace dae
 				Vector3 edgeV0V2 = positions[i2] - positions[i0];
 				Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2);
 
-				if(isnan(normal.x))
+				if (isnan(normal.x))
 				{
 					int k = 0;
 				}
