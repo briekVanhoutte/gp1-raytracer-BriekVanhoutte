@@ -31,13 +31,16 @@ void Renderer::Render(Scene* pScene) const
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
-			float gradient = px / static_cast<float>(m_Width);
-			gradient += py / static_cast<float>(m_Width);
-			gradient /= 2.0f;
+			float aspect = m_Width / m_Height;
 
-			ColorRGB finalColor{ gradient, gradient, gradient };
+			Vector3 rayDirection(camera.origin, {(((2*(px+0.5f))/m_Width)-1)*aspect ,
+												(1-(2*(py+0.5f))/m_Height),
+												 0.7f });
+			
+			rayDirection.Normalize();
 
-			//Update Color in Buffer
+			Ray hitRay({ 0,0,0 }, rayDirection);
+			ColorRGB finalColor{ rayDirection.x,rayDirection.y,rayDirection.z };
 			finalColor.MaxToOne();
 
 			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
@@ -55,4 +58,27 @@ void Renderer::Render(Scene* pScene) const
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
+}
+
+void  Renderer::RenderGradient(int px, int py) const
+{
+	float gradient = px / static_cast<float>(m_Width);
+	gradient += py / static_cast<float>(m_Width);
+	gradient /= 2.0f;
+
+	ColorRGB finalColor{ gradient, gradient, gradient };
+
+	//Update Color in Buffer
+	finalColor.MaxToOne();
+
+	m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+		static_cast<uint8_t>(finalColor.r * 255),
+		static_cast<uint8_t>(finalColor.g * 255),
+		static_cast<uint8_t>(finalColor.b * 255));
+}
+
+void Renderer::ShootRayEachPixel(int px, int py, Scene* pScene) const
+{
+
+
 }
