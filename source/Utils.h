@@ -19,18 +19,28 @@ namespace dae
 			if (d < 0) {
 				return false;
 			}
-			hitRecord.materialIndex = sphere.materialIndex;
-			hitRecord.didHit = true;
+
 
 			float t0{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
 
 			if (t0 > ray.min && t0 < ray.max) {
-				hitRecord.t = t0;
+				if (hitRecord.t > t0) {
+					hitRecord.materialIndex = sphere.materialIndex;
+					hitRecord.didHit = true;
+					hitRecord.t = t0;
+				}
 				return true;
 			}
 
-			float t2{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
-			hitRecord.t = t2;
+			float t1{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+			if (t1 > ray.min && t1 < ray.max) {
+				if (hitRecord.t > t1) {
+					hitRecord.materialIndex = sphere.materialIndex;
+					hitRecord.didHit = true;
+					hitRecord.t = t1;
+				}
+				return true;
+			}
 
 			return true;
 		}
