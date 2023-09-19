@@ -60,8 +60,24 @@ namespace dae
 		//PLANE HIT-TESTS
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			assert(false && "No Implemented Yet!");
+			//check if plane is not seen from side perfectly
+			if (Vector3::Dot(ray.direction, plane.normal) != 0)
+			{
+				float t{};
+				t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+
+				if (t>ray.min && t<ray.max)
+				{
+					if (hitRecord.t > t)
+					{
+						hitRecord.t = t;
+						hitRecord.didHit = true;
+						hitRecord.materialIndex = plane.materialIndex;
+						return true;
+					}
+				}
+			}
+
 			return false;
 		}
 
