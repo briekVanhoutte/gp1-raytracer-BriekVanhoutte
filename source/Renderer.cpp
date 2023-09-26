@@ -9,10 +9,11 @@
 #include "Material.h"
 #include "Scene.h"
 #include "Utils.h"
+#include <algorithm>
 
 using namespace dae;
 
-Renderer::Renderer(SDL_Window * pWindow) :
+Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow(pWindow),
 	m_pBuffer(SDL_GetWindowSurface(pWindow))
 {
@@ -28,27 +29,34 @@ void Renderer::Render(Scene* pScene) const
 	auto& lights = pScene->GetLights();
 
 	float fovValue = tanf((TO_RADIANS * camera.fovAngle) / 2);
+	const Matrix matrixToWorld = camera.CalculateCameraToWorld();
 
+
+	float aspect = 0.f;
+	Vector3 rayDirectionApplydCameraMovement = {};
+	Ray viewRay = {};
 	for (int px{}; px < m_Width; ++px)
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
 			// calc aspect ratio width over height
-			float aspect =float( m_Width) / float(m_Height);
+			aspect = float(m_Width) / float(m_Height);
 
 			/*
 				calc direction of ray for every pixel from camera location to pixel pixel location
 				pixel location calculated based on center of pixel +0.5f, and camera needs to look at center of the screen so some shenanigans to make that work
-			*/ 
+			*/
 
-			Vector3 rayDirection({0,0,0}, { (2 * (((px + 0.5f)) / m_Width) - 1) * aspect * fovValue ,
-												(1 - 2 * ( ( py + 0.5f ) ) / m_Height) * fovValue,
+			Vector3 rayDirection({ 0,0,0 }, { (((2 * (px + 0.5f)) / m_Width) - 1) * aspect * fovValue ,
+												(1 - ((2 * (py + 0.5f)) / m_Height)) * fovValue,
 												 0.7f });
-			
 			rayDirection.Normalize();
 
-			Ray viewRay(camera.origin, rayDirection);
+			rayDirectionApplydCameraMovement = matrixToWorld.TransformVector(rayDirection);
 
+
+			viewRay.origin = camera.origin;
+			viewRay.direction = rayDirectionApplydCameraMovement;
 			ColorRGB finalColor{};
 
 			//HitRecord containing more information about a potential hit
@@ -60,8 +68,30 @@ void Renderer::Render(Scene* pScene) const
 
 			if (closestHit.didHit)
 			{
+				bool shadow = false;
+
+				for(const Light & l: lights)
 				{
-					finalColor = materials[closestHit.materialIndex]->Shade();
+					Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f;
+
+					Vector3 raydir = LightUtils::GetDirectionToLight(l, originPointRay);
+					float rayMagnitude = raydir.Magnitude();
+					raydir.Normalize();
+					
+					Ray raytoLight(originPointRay, raydir);
+
+					raytoLight.max = rayMagnitude;
+
+					if (pScene->DoesHit(raytoLight))
+					{
+						shadow = true;
+					}
+				}
+
+				finalColor = materials[closestHit.materialIndex]->Shade();
+				if (shadow)
+				{
+					finalColor * 0.5f;
 				}
 			}
 
