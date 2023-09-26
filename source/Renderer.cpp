@@ -24,90 +24,77 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 void Renderer::Render(Scene* pScene) const
 {
-	Camera& camera = pScene->GetCamera();
-	auto& materials = pScene->GetMaterials();
-	auto& lights = pScene->GetLights();
+    Camera& camera = pScene->GetCamera();
+    auto& materials = pScene->GetMaterials();
+    auto& lights = pScene->GetLights();
 
-	float fovValue = tanf((TO_RADIANS * camera.fovAngle) / 2);
-	const Matrix matrixToWorld = camera.CalculateCameraToWorld();
+    float fovValue = tanf((TO_RADIANS * camera.fovAngle) / 2);
+    const Matrix matrixToWorld = camera.CalculateCameraToWorld();
 
+    float aspect = static_cast<float>(m_Width) / static_cast<float>(m_Height);
+    Vector3 rayDirectionApplydCameraMovement;
 
-	float aspect = 0.f;
-	Vector3 rayDirectionApplydCameraMovement = {};
-	Ray viewRay = {};
-	for (int px{}; px < m_Width; ++px)
-	{
-		for (int py{}; py < m_Height; ++py)
-		{
-			// calc aspect ratio width over height
-			aspect = float(m_Width) / float(m_Height);
+    Ray viewRay;
+    viewRay.origin = camera.origin;
+    ColorRGB finalColor;
 
-			/*
-				calc direction of ray for every pixel from camera location to pixel pixel location
-				pixel location calculated based on center of pixel +0.5f, and camera needs to look at center of the screen so some shenanigans to make that work
-			*/
+    for (int px = 0; px < m_Width; ++px)
+    {
+        for (int py = 0; py < m_Height; ++py)
+        {
+            float ndcX = (2.0f * (px + 0.5f) / m_Width - 1.0f) * aspect * fovValue;
+            float ndcY = (1.0f - 2.0f * (py + 0.5f) / m_Height) * fovValue;
 
-			Vector3 rayDirection({ 0,0,0 }, { (((2 * (px + 0.5f)) / m_Width) - 1) * aspect * fovValue ,
-												(1 - ((2 * (py + 0.5f)) / m_Height)) * fovValue,
-												 0.7f });
-			rayDirection.Normalize();
+            Vector3 rayDirection(ndcX, ndcY, 0.7f);
+            rayDirection.Normalize();
+            rayDirectionApplydCameraMovement = matrixToWorld.TransformVector(rayDirection);
 
-			rayDirectionApplydCameraMovement = matrixToWorld.TransformVector(rayDirection);
+            viewRay.direction = rayDirectionApplydCameraMovement;
+            finalColor = {};
 
+            HitRecord closestHit;
+            pScene->GetClosestHit(viewRay, closestHit);
 
-			viewRay.origin = camera.origin;
-			viewRay.direction = rayDirectionApplydCameraMovement;
-			ColorRGB finalColor{};
+            if (closestHit.didHit)
+            {
+                bool shadow = false;
 
-			//HitRecord containing more information about a potential hit
-			HitRecord closestHit{};
-			pScene->GetClosestHit(viewRay, closestHit);
-			//Sphere testSphere{ {0.f,0.f,100.f},50.f,0 };
+                for (const Light& l : lights)
+                {
+                    Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f;
+                    Vector3 raydir = LightUtils::GetDirectionToLight(l, originPointRay);
+                    float rayMagnitude = raydir.Magnitude();
+                    raydir.Normalize();
 
-			//GeometryUtils::HitTest_Sphere(testSphere, viewRay, closestHit);
+                    Ray raytoLight(originPointRay, raydir);
+                    raytoLight.max = rayMagnitude;
 
-			if (closestHit.didHit)
-			{
-				bool shadow = false;
+                    if (pScene->DoesHit(raytoLight))
+                    {
+                        shadow = true;
+                        break; // No need to check other lights
+                    }
+                }
 
-				for(const Light & l: lights)
-				{
-					Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f;
+                finalColor = materials[closestHit.materialIndex]->Shade();
+                if (shadow)
+                {
+                    finalColor *= 0.5f; // Fix: Multiply, not assign
+                }
+            }
 
-					Vector3 raydir = LightUtils::GetDirectionToLight(l, originPointRay);
-					float rayMagnitude = raydir.Magnitude();
-					raydir.Normalize();
-					
-					Ray raytoLight(originPointRay, raydir);
+            finalColor.MaxToOne();
 
-					raytoLight.max = rayMagnitude;
+            m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+                static_cast<uint8_t>(finalColor.r * 255),
+                static_cast<uint8_t>(finalColor.g * 255),
+                static_cast<uint8_t>(finalColor.b * 255));
+        }
+    }
 
-					if (pScene->DoesHit(raytoLight))
-					{
-						shadow = true;
-					}
-				}
-
-				finalColor = materials[closestHit.materialIndex]->Shade();
-				if (shadow)
-				{
-					finalColor * 0.5f;
-				}
-			}
-
-			finalColor.MaxToOne();
-
-			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
-		}
-	}
-
-	//@END
-	//Update SDL Surface
-	SDL_UpdateWindowSurface(m_pWindow);
+    SDL_UpdateWindowSurface(m_pWindow);
 }
+
 
 bool Renderer::SaveBufferToImage() const
 {
