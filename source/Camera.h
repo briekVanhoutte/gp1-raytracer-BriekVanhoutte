@@ -16,11 +16,14 @@ namespace dae
 			origin{_origin},
 			fovAngle{_fovAngle}
 		{
+			
 		}
 
 
 		Vector3 origin{};
 		float fovAngle{90.f};
+
+		float fovValue{ tanf((TO_RADIANS * fovAngle) / 2)};
 
 		Vector3 forward{Vector3::UnitZ};
 		Vector3 up{Vector3::UnitY};
