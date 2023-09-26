@@ -12,42 +12,44 @@ namespace dae
 	{
 #pragma region Sphere HitTest
 		//SPHERE HIT-TESTS
+
+
 		inline bool hitTestSphereAnalytical(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord)
 		{
-			float d = std::powf(Vector3::Dot((2 * ray.direction), (ray.origin - sphere.origin)), 2.f) - 4 * Vector3::Dot(ray.direction, ray.direction) * (Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius));
+			Vector3 sphereToRay = ray.origin - sphere.origin;
+			float a = Vector3::Dot(ray.direction, ray.direction);
+			float b = 2.0f * Vector3::Dot(ray.direction, sphereToRay);
+			float c = Vector3::Dot(sphereToRay, sphereToRay) - (sphere.radius * sphere.radius);
 
-			if (d < 0) {
-				return false;
+			float discriminant = b * b - 4 * a * c;
+
+			if (discriminant < 0) {
+				return false;  // No intersection.
 			}
 
+			float sqrtDiscriminant = sqrtf(discriminant);
+			float invA = 1.0f / (2.0f * a);
 
-			float t0{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+			float t0 = (-b - sqrtDiscriminant) * invA;
+			float t1 = (-b + sqrtDiscriminant) * invA;
 
-			if (t0 > ray.min && t0 < ray.max) {
-				if (hitRecord.t > t0) {
-					hitRecord.materialIndex = sphere.materialIndex;
-					hitRecord.didHit = true;
-					hitRecord.t = t0;
-					hitRecord.origin = ray.origin + ray.direction * t0;
-					hitRecord.normal = Vector3(sphere.origin, hitRecord.origin).Normalized();
-				}
+			if (t0 < ray.min || t0 > ray.max) {
+				t0 = t1;  // Swap t0 and t1 if t0 is outside the valid range.
+			}
+
+			if (t0 >= ray.min && t0 <= ray.max && t0 < hitRecord.t) {
+				hitRecord.t = t0;
+				hitRecord.materialIndex = sphere.materialIndex;
+				hitRecord.didHit = true;
+				hitRecord.origin = ray.origin + ray.direction * t0;
+				hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
 				return true;
 			}
 
-			float t1{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
-			if (t1 > ray.min && t1 < ray.max) {
-				if (hitRecord.t > t1) {
-					hitRecord.materialIndex = sphere.materialIndex;
-					hitRecord.didHit = true;
-					hitRecord.t = t1;
-					hitRecord.origin = ray.origin + ray.direction * t1;
-					hitRecord.normal = Vector3(sphere.origin, hitRecord.origin).Normalized();
-				}
-				return true;
-			}
-
-			return true;
+			return false;  // No valid intersection found.
 		}
+
+
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
@@ -61,25 +63,30 @@ namespace dae
 		}
 
 		inline bool TestIfRayHitSphere(const Sphere& sphere, const Ray& ray) {
-			float d = std::powf(Vector3::Dot((2 * ray.direction), (ray.origin - sphere.origin)), 2.f) - 4 * Vector3::Dot(ray.direction, ray.direction) * (Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius));
+			Vector3 sphereToRay = ray.origin - sphere.origin;
+			float a = Vector3::Dot(ray.direction, ray.direction);
+			float b = 2.0f * Vector3::Dot(ray.direction, sphereToRay);
+			float c = Vector3::Dot(sphereToRay, sphereToRay) - (sphere.radius * sphere.radius);
 
-			if (d < 0) {
-				return false;
+			float discriminant = b * b - 4 * a * c;
+
+			if (discriminant < 0) {
+				return false;  // No intersection.
 			}
 
-			float t0{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+			float sqrtDiscriminant = sqrtf(discriminant);
+			float invA = 1.0f / (2.0f * a);
 
-			if (t0 > ray.min && t0 < ray.max) {
-				return true;
+			float t0 = (-b - sqrtDiscriminant) * invA;
+			float t1 = (-b + sqrtDiscriminant) * invA;
+
+			if ((t0 >= ray.min && t0 <= ray.max) || (t1 >= ray.min && t1 <= ray.max)) {
+				return true;  // Intersection within ray's valid range.
 			}
 
-			float t1{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
-			if (t1 > ray.min && t1 < ray.max) {
-				return true;
-			}
-
-			return false;
+			return false;  // No valid intersection found.
 		}
+
 
 
 
@@ -87,43 +94,52 @@ namespace dae
 #pragma region Plane HitTest
 		//PLANE HIT-TESTS
 		inline bool TestIfRayHitPlane(const Plane& plane, const Ray& ray) {
-			if (Vector3::Dot(ray.direction, plane.normal) != 0)
-			{
-				float t{};
-				t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+			float denominator = Vector3::Dot(ray.direction, plane.normal);
 
-				if (t > ray.min && t < ray.max)
-				{
+			// Check if the ray is not parallel to the plane.
+			if (denominator != 0.0f) {
+				float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / denominator;
+
+				// Check if the intersection point is within the valid range.
+				if (t >= ray.min && t <= ray.max) {
 					return true;
 				}
 			}
+
 			return false;
 		}
 
+
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//check if plane is not seen from side perfectly
-			if (Vector3::Dot(ray.direction, plane.normal) != 0)
-			{
-				float t{};
-				t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+			const float dotDirectionNormal = Vector3::Dot(ray.direction, plane.normal);
 
-				if (t>ray.min && t<ray.max)
+			// Check if the ray and plane are not parallel
+			if (dotDirectionNormal != 0)
+			{
+				const float t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / dotDirectionNormal;
+
+				// Check if t is within the ray's valid range
+				if (t > ray.min && t < ray.max)
 				{
-					if (hitRecord.t > t)
+					if (!ignoreHitRecord && t >= hitRecord.t)
 					{
-						hitRecord.t = t;
-						hitRecord.didHit = true;
-						hitRecord.materialIndex = plane.materialIndex;
-						hitRecord.origin = ray.origin + ray.direction * t;
-						hitRecord.normal = plane.normal.Normalized();
-						return true;
+						return false;  // No need to update hitRecord
 					}
+
+					hitRecord.t = t;
+					hitRecord.didHit = true;
+					hitRecord.materialIndex = plane.materialIndex;
+					hitRecord.origin = ray.origin + ray.direction * t;
+					hitRecord.normal = plane.normal;
+
+					return true;
 				}
 			}
 
 			return false;
 		}
+
 
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray)
 		{

@@ -28,13 +28,14 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
-		std::for_each(m_SphereGeometries.begin(), m_SphereGeometries.end(), [&ray,&closestHit](const Sphere& s) {
+		for (const Sphere& s : m_SphereGeometries) {
 			GeometryUtils::HitTest_Sphere(s, ray, closestHit);
-		});
+		}
 
-		std::for_each(m_PlaneGeometries.begin(), m_PlaneGeometries.end(), [&ray, &closestHit](const Plane& p) {
+		for (const Plane& p : m_PlaneGeometries) {
 			GeometryUtils::HitTest_Plane(p, ray, closestHit);
-		});
+		}
+
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
