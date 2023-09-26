@@ -27,14 +27,18 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
-	float fovValue = tanf((TO_RADIANS * camera.fovAngle) / 2);
+	float fovValue = tanf((TO_RADIANS * 45.f) / 2);
+	const Matrix matrixToWorld = camera.CalculateCameraToWorld();
 
+	float aspect = 0.f;
+	Vector3 rayDirectionApplydCameraMovement = {};
+	Ray viewRay = {};
 	for (int px{}; px < m_Width; ++px)
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
 			// calc aspect ratio width over height
-			float aspect =float( m_Width) / float(m_Height);
+			aspect = float( m_Width) / float(m_Height);
 
 			/*
 				calc direction of ray for every pixel from camera location to pixel pixel location
@@ -44,11 +48,13 @@ void Renderer::Render(Scene* pScene) const
 			Vector3 rayDirection({0,0,0}, { (2 * (((px + 0.5f)) / m_Width) - 1) * aspect * fovValue ,
 												(1 - 2 * ( ( py + 0.5f ) ) / m_Height) * fovValue,
 												 0.7f });
-			
 			rayDirection.Normalize();
 
-			Ray viewRay(camera.origin, rayDirection);
+			rayDirectionApplydCameraMovement = matrixToWorld.TransformVector(rayDirection);
 
+			
+			viewRay.origin = camera.origin;
+			viewRay.direction = rayDirectionApplydCameraMovement;
 			ColorRGB finalColor{};
 
 			//HitRecord containing more information about a potential hit

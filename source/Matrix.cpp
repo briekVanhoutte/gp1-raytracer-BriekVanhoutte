@@ -159,6 +159,7 @@ namespace dae {
 		// 0  sy 0  0
 		// 0  0  sz 0
 		// 0  0  0  1
+
 		return { {sx,0.f,0.f,0.f},{0.f,sy,0.f,0.f},{0.f,0.f,sz,0.f}, {0.f,0.f,0.f,1.f}	};
 	}
 
