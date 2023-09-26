@@ -115,12 +115,12 @@ namespace dae {
 
 	Matrix Matrix::CreateRotationX(float pitch)
 	{
-		// 1 0       0      0
-		// 0 cos(a) -sin(a) 0
-		// 0 sin(a)  cos(a) 0
-		// 3 0       0      1
+		// 1  0      0      0
+		// 0 cos(a)  sin(a) 0
+		// 0 -sin(a) cos(a) 0
+		// 0  0      0      1
 
-		return { {1.f,0.f,0.f,0.f}, {0.f, cosf(pitch), -sinf(pitch),0.f}, {0.f, sinf(pitch), cosf(pitch), 0.f} , {3.f,0.f,0.f,1.f} };
+		return { {1.f,0.f,0.f,0.f}, {0.f, cosf(pitch), -sinf(pitch),0.f}, {0.f, sinf(pitch), cosf(pitch), 0.f} , {0.f,0.f,0.f,1.f} };
 	}
 
 	Matrix Matrix::CreateRotationY(float yaw)
@@ -128,9 +128,9 @@ namespace dae {
 		// cos(b) 0 -sin(b) 0
 		// 0      1  0      0
 		// sin(b) 0  cos(b) 0
-		// 0      3  0      1
+		// 0      0  0      1
 
-		return { { cosf(yaw), 0, -sinf(yaw), 0}, {0.f, 1.f, 0.f, 0.f}, {sinf(yaw), 0.f, cosf(yaw), 0.f}, {0.f, 3.f, 0.f, 1.f} };
+		return { { cosf(yaw), 0, sinf(yaw), 0}, {0.f, 1.f, 0.f, 0.f}, {-sinf(yaw), 0.f, cosf(yaw), 0.f}, {0.f, 0.f, 0.f, 1.f} };
 	}
 
 	Matrix Matrix::CreateRotationZ(float roll)
@@ -138,9 +138,9 @@ namespace dae {
 		//  cos(y) sin(y) 0 0
 		// -sin(y) cos(y) 0 0
 		//	0      0      1 0
-		//  0      0      3 1
+		//  0      0      0 1
 
-		return { {cosf(roll), sinf(roll), 0.f, 0.f}, {-sinf(roll), cosf(roll), 0.f, 0.f}, {0.f, 0.f, 1.f, 0.f}, {0.f, 0.f, 3.f, 1.f}};
+		return { {cosf(roll), -sinf(roll), 0.f, 0.f}, {sinf(roll), cosf(roll), 0.f, 0.f}, {0.f, 0.f, 1.f, 0.f}, {0.f, 0.f, 0.f, 1.f}};
 	}
 
 	Matrix Matrix::CreateRotation(const Vector3& r)

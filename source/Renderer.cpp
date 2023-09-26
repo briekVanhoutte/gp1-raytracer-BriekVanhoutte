@@ -27,8 +27,9 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
-	float fovValue = tanf((TO_RADIANS * 45.f) / 2);
+	float fovValue = tanf((TO_RADIANS * camera.fovAngle) / 2);
 	const Matrix matrixToWorld = camera.CalculateCameraToWorld();
+
 
 	float aspect = 0.f;
 	Vector3 rayDirectionApplydCameraMovement = {};
@@ -45,8 +46,8 @@ void Renderer::Render(Scene* pScene) const
 				pixel location calculated based on center of pixel +0.5f, and camera needs to look at center of the screen so some shenanigans to make that work
 			*/ 
 
-			Vector3 rayDirection({0,0,0}, { (2 * (((px + 0.5f)) / m_Width) - 1) * aspect * fovValue ,
-												(1 - 2 * ( ( py + 0.5f ) ) / m_Height) * fovValue,
+			Vector3 rayDirection({0,0,0}, { ( ((2 * (px + 0.5f)) / m_Width) - 1) * aspect * fovValue ,
+												(1 - (( 2 * ( py + 0.5f ) ) / m_Height)) * fovValue,
 												 0.7f });
 			rayDirection.Normalize();
 
