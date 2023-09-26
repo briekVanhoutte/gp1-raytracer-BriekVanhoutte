@@ -35,13 +35,23 @@ namespace dae {
 		std::for_each(m_PlaneGeometries.begin(), m_PlaneGeometries.end(), [&ray, &closestHit](const Plane& p) {
 			GeometryUtils::HitTest_Plane(p, ray, closestHit);
 		});
-
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
 	{
-		//todo W3
-		assert(false && "No Implemented Yet!");
+		for(const Sphere& s: m_SphereGeometries)
+		{
+			if (GeometryUtils::TestIfRayHitSphere(s, ray)) {
+				return true;
+			}
+		}
+		for (const Plane& p : m_PlaneGeometries)
+		{
+			if (GeometryUtils::TestIfRayHitPlane(p, ray)) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 

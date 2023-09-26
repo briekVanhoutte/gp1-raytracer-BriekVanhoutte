@@ -28,6 +28,8 @@ namespace dae
 					hitRecord.materialIndex = sphere.materialIndex;
 					hitRecord.didHit = true;
 					hitRecord.t = t0;
+					hitRecord.origin = ray.origin + ray.direction * t0;
+					hitRecord.normal = Vector3(sphere.origin, hitRecord.origin).Normalized();
 				}
 				return true;
 			}
@@ -38,6 +40,8 @@ namespace dae
 					hitRecord.materialIndex = sphere.materialIndex;
 					hitRecord.didHit = true;
 					hitRecord.t = t1;
+					hitRecord.origin = ray.origin + ray.direction * t1;
+					hitRecord.normal = Vector3(sphere.origin, hitRecord.origin).Normalized();
 				}
 				return true;
 			}
@@ -55,9 +59,47 @@ namespace dae
 			HitRecord temp{};
 			return HitTest_Sphere(sphere, ray, temp, true);
 		}
+
+		inline bool TestIfRayHitSphere(const Sphere& sphere, const Ray& ray) {
+			float d = std::powf(Vector3::Dot((2 * ray.direction), (ray.origin - sphere.origin)), 2.f) - 4 * Vector3::Dot(ray.direction, ray.direction) * (Vector3::Dot((ray.origin - sphere.origin), (ray.origin - sphere.origin)) - (sphere.radius * sphere.radius));
+
+			if (d < 0) {
+				return false;
+			}
+
+			float t0{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+
+			if (t0 > ray.min && t0 < ray.max) {
+				return true;
+			}
+
+			float t1{ (-(Vector3::Dot(2 * ray.direction,(ray.origin - sphere.origin))) - std::sqrtf(d)) / 2 * Vector3::Dot(ray.direction,ray.direction) };
+			if (t1 > ray.min && t1 < ray.max) {
+				return true;
+			}
+
+			return false;
+		}
+
+
+
 #pragma endregion
 #pragma region Plane HitTest
 		//PLANE HIT-TESTS
+		inline bool TestIfRayHitPlane(const Plane& plane, const Ray& ray) {
+			if (Vector3::Dot(ray.direction, plane.normal) != 0)
+			{
+				float t{};
+				t = Vector3::Dot((plane.origin - ray.origin), plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+
+				if (t > ray.min && t < ray.max)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//check if plane is not seen from side perfectly
@@ -73,6 +115,8 @@ namespace dae
 						hitRecord.t = t;
 						hitRecord.didHit = true;
 						hitRecord.materialIndex = plane.materialIndex;
+						hitRecord.origin = ray.origin + ray.direction * t;
+						hitRecord.normal = plane.normal.Normalized();
 						return true;
 					}
 				}
@@ -124,8 +168,8 @@ namespace dae
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+			
+			return Vector3(origin,light.origin);
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
