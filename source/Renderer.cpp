@@ -24,9 +24,6 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 void Renderer::Render(Scene* pScene) const
 {
-
-
-
 	Camera& camera = pScene->GetCamera();
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
@@ -83,26 +80,31 @@ void Renderer::Render(Scene* pScene) const
 						break;
 					}
 					if (angleCos >= 0) {
-						totalLightColor += LightUtils::GetRadiance(l, closestHit.origin, closestHit.normal) * angleCos;
+						totalLightColor += LightUtils::GetRadiance(l, closestHit.origin, closestHit.normal) * 
+										   materials[closestHit.materialIndex]->Shade(closestHit, -LightUtils::GetDirectionToLight(l, closestHit.origin) ,  camera.forward) *
+										   angleCos;
+
+						if (m_ShadowsEnabled) {
+							Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f;
+							Vector3 raydir = LightUtils::GetDirectionToLight(l, originPointRay);
+							float rayMagnitude = raydir.Magnitude();
+							raydir.Normalize();
+
+							Ray raytoLight(originPointRay, raydir);
+							raytoLight.max = rayMagnitude;
+
+
+							if (pScene->DoesHit(raytoLight))
+							{
+								shadow = true;
+
+							}
+						}
+
 					}
 					
 
-					if (m_ShadowsEnabled) {
-						Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f;
-						Vector3 raydir = LightUtils::GetDirectionToLight(l, originPointRay);
-						float rayMagnitude = raydir.Magnitude();
-						raydir.Normalize();
-
-						Ray raytoLight(originPointRay, raydir);
-						raytoLight.max = rayMagnitude;
-
-
-						if (pScene->DoesHit(raytoLight))
-						{
-							shadow = true;
-
-						}
-					}
+					
 				}
 				totalLightColor.MaxToOne();
 				//finalColor = materials[closestHit.materialIndex]->Shade();

@@ -19,10 +19,18 @@ namespace dae
 
 		static ColorRGB Lambert(const ColorRGB& kd, const ColorRGB& cd)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			// Calculate the reflection coefficient for each channel separately
+			ColorRGB rho;
+			rho.r = kd.r * cd.r;
+			rho.g = kd.g * cd.g;
+			rho.b = kd.b * cd.b;
+
+			// Normalize the reflection coefficient by dividing by pi
+			rho = rho / M_PI;
+
+			return rho;
 		}
+
 
 		/**
 		 * \brief todo
@@ -34,10 +42,13 @@ namespace dae
 		 * \return Phong Specular Color
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
-		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+		{	
+			Vector3 r = l - 2 * Vector3::Dot(n, l) * n;
+			float cosAlpha = Vector3::Dot(r, v);
+
+			float specularColor = ks * powf(cosAlpha, exp);
+
+			return ColorRGB(specularColor,specularColor,specularColor);
 		}
 
 		/**

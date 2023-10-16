@@ -2,6 +2,7 @@
 #include "Math.h"
 #include "DataTypes.h"
 #include "BRDFs.h"
+#include <iostream>
 
 namespace dae
 {
@@ -82,9 +83,7 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return BRDF::Lambert(m_DiffuseReflectance,m_DiffuseColor) + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
 		}
 
 	private:
