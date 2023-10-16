@@ -103,8 +103,6 @@ void Renderer::Render(Scene* pScene) const
 
 					}
 					
-
-					
 				}
 				totalLightColor.MaxToOne();
 				//finalColor = materials[closestHit.materialIndex]->Shade();
