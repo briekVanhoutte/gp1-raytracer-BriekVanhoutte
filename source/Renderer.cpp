@@ -38,6 +38,7 @@ void Renderer::Render(Scene* pScene) const
 	viewRay.origin = camera.origin;
 	ColorRGB finalColor;
 
+
 	for (int px = 0; px < m_Width; ++px)
 	{
 		for (int py = 0; py < m_Height; ++py)
@@ -85,39 +86,47 @@ void Renderer::Render(Scene* pScene) const
 					}
 
 					Vector3 directionToHit = (camera.origin - closestHit.origin).Normalized();
+					ColorRGB shading = {};
 
-
-
-					if (!m_ShadowsEnabled) {
-						switch (m_CurrentLightingMode)
-						{
-						case dae::Renderer::LightingMode::ObservedArea:
-							totalLightColor += ColorRGB{ 1.f,1.f,1.f } *angleCos;
-							break;
-						case dae::Renderer::LightingMode::Radiance:
-								totalLightColor += irradiance ;
-							break;
-						case dae::Renderer::LightingMode::BRDF:
-							if (angleCos > 0) {
-								ColorRGB shading = materials[closestHit.materialIndex]->Shade(closestHit, LightUtils::GetDirectionToLight(l, closestHit.origin).Normalized(), directionToHit);
-								totalLightColor += shading;
-							}
-							break;
-						case dae::Renderer::LightingMode::Combined:
-							if (angleCos > 0) {
-								ColorRGB shading = materials[closestHit.materialIndex]->Shade(closestHit, LightUtils::GetDirectionToLight(l, closestHit.origin).Normalized(), directionToHit);
-								totalLightColor += irradiance * shading * angleCos;
-							}
-
-							break;
-						default:
-							break;
-						}
-					}
-					else
+					switch (m_CurrentLightingMode)
 					{
+					case dae::Renderer::LightingMode::ObservedArea:
 						if (angleCos > 0) {
+							totalLightColor += ColorRGB{ 1.f,1.f,1.f } *angleCos;
+						}
+						break;
+					case dae::Renderer::LightingMode::Radiance:
+						if (!m_ShadowsEnabled)
+						{
+							totalLightColor += irradiance;
+						}
+						else
+						{
+							if (angleCos > 0) {
+								totalLightColor += irradiance;
+							}
+						}
+						break;
+					case dae::Renderer::LightingMode::BRDF:
+						if (angleCos > 0) {
+							shading = materials[closestHit.materialIndex]->Shade(closestHit, LightUtils::GetDirectionToLight(l, closestHit.origin).Normalized(), directionToHit);
+							totalLightColor += shading;
+						}
+						break;
+					case dae::Renderer::LightingMode::Combined:
+						if (angleCos > 0) {
+							shading = materials[closestHit.materialIndex]->Shade(closestHit, LightUtils::GetDirectionToLight(l, closestHit.origin).Normalized(), directionToHit);
+							totalLightColor += irradiance * shading * angleCos;
+						}
+						break;
+					default:
+						break;
+					}
 
+					if (m_ShadowsEnabled)
+					{
+
+						if (angleCos > 0) {
 							Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f;
 							Vector3 raydir = LightUtils::GetDirectionToLight(l, originPointRay);
 							float rayMagnitude = raydir.Magnitude();
@@ -132,7 +141,6 @@ void Renderer::Render(Scene* pScene) const
 								amountShadow++;
 								shadow = true;
 							}
-
 						}
 					}
 				}
