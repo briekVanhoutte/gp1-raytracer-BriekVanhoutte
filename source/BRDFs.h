@@ -26,7 +26,7 @@ namespace dae
 			rho.b = kd.b * cd.b;
 
 			// Normalize the reflection coefficient by dividing by pi
-			rho = rho / M_PI;
+			rho = rho / float(M_PI);
 
 			return rho;
 		}
@@ -105,8 +105,8 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			float k = powf(powf(roughness, 2.f) + 1, 2.f) / 8.f;
-			return  GeometryFunction_SchlickGGX(n, v, k) * GeometryFunction_SchlickGGX(n, l, k);
+			
+			return  GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness);
 		}
 
 	}
