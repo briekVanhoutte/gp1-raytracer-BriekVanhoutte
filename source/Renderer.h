@@ -20,13 +20,30 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
+		void Update();
+
 		void Render(Scene* pScene) const;
 		bool SaveBufferToImage() const;
 
 		void RenderGradient(int px, int py) const;
-		void ShootRayEachPixel(int px, int py, Scene* pScene) const;
+
+		void ToggleShadows();
+		void CycleLightingMode();
 
 	private:
+		enum class LightingMode {
+			ObservedArea, //lambert cosine law
+			Radiance, // incident Radiance
+			BRDF, // scatering of the light
+			Combined // ObservedArea * Radiance * BRDF
+		};
+
+		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
+		bool m_ShadowsEnabled{ false };
+
+		bool m_F2Pressed{ false };
+		bool m_F3Pressed{ false };
+
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pBuffer{};

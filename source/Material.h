@@ -2,6 +2,7 @@
 #include "Math.h"
 #include "DataTypes.h"
 #include "BRDFs.h"
+#include <iostream>
 
 namespace dae
 {
@@ -59,9 +60,7 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return BRDF::Lambert(m_DiffuseReflectance,m_DiffuseColor);
 		}
 
 	private:
@@ -84,9 +83,7 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return BRDF::Lambert(m_DiffuseReflectance,m_DiffuseColor) + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
 		}
 
 	private:
@@ -109,10 +106,35 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			// Constants
+			ColorRGB f0 = m_Metalness == 0.f ? ColorRGB(0.04f, 0.04f, 0.04f) : m_Albedo;
+
+			// Calculate half vector between view direction and light direction
+			Vector3 h = (v + l).Normalized();
+
+			// Calculate specular component (Cook-Torrance)
+			ColorRGB F = BRDF::FresnelFunction_Schlick(h, v, f0);
+			float NdotV = Vector3::Dot(v, hitRecord.normal);
+			float NdotL = Vector3::Dot(l, hitRecord.normal);
+			float D = BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness);
+			float G = BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness);
+
+			ColorRGB DFG = F * G * D;
+
+			float torranceVar = 4.0f * NdotV * NdotL;
+
+			ColorRGB specular = DFG / torranceVar;
+
+			ColorRGB kd = m_Metalness == 0.f ? (ColorRGB(1.f, 1.f, 1.f) - F) : ColorRGB(0, 0, 0);
+
+			// Calculate diffuse component (Lambert)
+			ColorRGB diffuse = BRDF::Lambert(kd, m_Albedo);
+
+			ColorRGB finalColor = diffuse + specular;
+
+			return finalColor;
 		}
+
 
 	private:
 		ColorRGB m_Albedo{0.955f, 0.637f, 0.538f}; //Copper

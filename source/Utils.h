@@ -71,7 +71,7 @@ namespace dae
 			float discriminant = b * b - 4 * a * c;
 
 			if (discriminant < 0) {
-				return false;  // No intersection.
+				return false; 
 			}
 
 			float sqrtDiscriminant = sqrtf(discriminant);
@@ -81,10 +81,10 @@ namespace dae
 			float t1 = (-b + sqrtDiscriminant) * invA;
 
 			if ((t0 >= ray.min && t0 <= ray.max) || (t1 >= ray.min && t1 <= ray.max)) {
-				return true;  // Intersection within ray's valid range.
+				return true; 
 			}
 
-			return false;  // No valid intersection found.
+			return false; 
 		}
 
 
@@ -124,7 +124,7 @@ namespace dae
 				{
 					if (!ignoreHitRecord && t >= hitRecord.t)
 					{
-						return false;  // No need to update hitRecord
+						return false;
 					}
 
 					hitRecord.t = t;
@@ -183,17 +183,17 @@ namespace dae
 		//Direction from target to light
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
-			//todo W3
-			
 			return Vector3(origin,light.origin);
 		}
 
-		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
+		inline ColorRGB GetRadiance(const Light& light, const Vector3& target, const Vector3& surfaceNormal)
 		{
-			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+
+			Vector3 direction = light.origin - target;
+
+			return light.color * (light.intensity/(direction.SqrMagnitude()));
 		}
+
 	}
 
 	namespace Utils
