@@ -66,21 +66,24 @@ void Renderer::Render(Scene* pScene) const
 				for (const Light& l : lights)
 				{
 					float angleCos = 1.f;
+					ColorRGB irradiance = {};
 					
 					switch (l.type)
 					{
 					case LightType::Point:
 						angleCos = Vector3::Dot(closestHit.normal, LightUtils::GetDirectionToLight(l, closestHit.origin));
+						irradiance = LightUtils::GetRadiance(l, closestHit.origin, closestHit.normal);
 						break;
 					case LightType::Directional:
 						angleCos = Vector3::Dot(closestHit.normal, l.direction);
+						irradiance = l.color * l.intensity;
 						break;
 					default:
 						
 						break;
 					}
-					if (angleCos >= 0) {
-						totalLightColor += LightUtils::GetRadiance(l, closestHit.origin, closestHit.normal) * 
+					if (angleCos > 0) {
+						totalLightColor += irradiance *
 										   materials[closestHit.materialIndex]->Shade(closestHit, -LightUtils::GetDirectionToLight(l, closestHit.origin) ,  camera.forward) *
 										   angleCos;
 
@@ -97,13 +100,11 @@ void Renderer::Render(Scene* pScene) const
 							if (pScene->DoesHit(raytoLight))
 							{
 								shadow = true;
-
 							}
 						}
-
 					}
-					
 				}
+
 				totalLightColor.MaxToOne();
 				//finalColor = materials[closestHit.materialIndex]->Shade();
 				finalColor += totalLightColor;
