@@ -126,6 +126,9 @@ namespace dae
 		Scene_W4& operator=(Scene_W4&&) noexcept = delete;
 
 		void Initialize() override;
+		void Update(Timer*) override;
+	private:
+		TriangleMesh* m_Meshes[3]{};
 	};
 
 
