@@ -151,9 +151,61 @@ namespace dae
 		//TRIANGLE HIT-TESTS
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
-			return false;
+			
+			if (Vector3::Dot(triangle.normal, ray.direction) == 0)
+			{
+				return false;
+			}
+
+			Vector3 L = triangle.v0 - ray.origin;
+
+			float t = Vector3::Dot(L, triangle.normal) / Vector3::Dot(ray.direction,triangle.normal);
+
+			if (t<ray.min || t > ray.max) return false;
+
+			Vector3 P = ray.origin + (ray.direction * t);
+
+			const int triangleCorners = 3;
+
+			{
+				Vector3 EdgeA{ (triangle.v1 - triangle.v0).Normalized()};
+
+				Vector3 pointToSide{ (P - triangle.v0).Normalized()};
+
+				if (Vector3::Dot(triangle.normal, Vector3::Cross(EdgeA, pointToSide)) < 0)
+				{
+					return false;
+				}
+			}
+
+			{
+				Vector3 EdgeA{ (triangle.v2 - triangle.v1).Normalized() };
+
+				Vector3 pointToSide{ (P - triangle.v1).Normalized() };
+
+				if (Vector3::Dot(triangle.normal, Vector3::Cross(EdgeA, pointToSide)) < 0)
+				{
+					return false;
+				}
+			}
+
+			{
+				Vector3 EdgeA{ (triangle.v0 - triangle.v2).Normalized() };
+
+				Vector3 pointToSide{ (P - triangle.v2).Normalized() };
+
+				if (Vector3::Dot(triangle.normal, Vector3::Cross(EdgeA, pointToSide)) < 0)
+				{
+					return false;
+				}
+			}
+
+			hitRecord.didHit = true;
+			hitRecord.normal = triangle.normal;
+			hitRecord.origin = P;
+			hitRecord.t = t;
+
+			return true;
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)

@@ -37,6 +37,10 @@ namespace dae {
 			GeometryUtils::HitTest_Plane(p, ray, closestHit);
 		}
 
+		for (const Triangle t : m_Triangles) {
+			GeometryUtils::HitTest_Triangle(t, ray, closestHit);
+		}
+
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
@@ -53,6 +57,10 @@ namespace dae {
 				return true;
 			}
 		}
+		for (const Triangle t : m_Triangles) {
+			return GeometryUtils::HitTest_Triangle(t, ray);
+		}
+
 
 		return false;
 	}
