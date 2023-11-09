@@ -149,12 +149,65 @@ namespace dae
 #pragma endregion
 #pragma region Triangle HitTest
 		//TRIANGLE HIT-TESTS
-		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
-		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
-			return false;
+
+		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false) {
+			float dirDotNormal = Vector3::Dot(ray.direction, triangle.normal);
+
+			// Early exit for parallel ray and triangle normal or back/front face culling
+			if (dirDotNormal == 0 ||
+				(!ignoreHitRecord && (
+					(triangle.cullMode == TriangleCullMode::BackFaceCulling && dirDotNormal > 0) ||
+					(triangle.cullMode == TriangleCullMode::FrontFaceCulling && dirDotNormal < 0)
+					))) {
+				return false;
+			}
+
+			Vector3 toVertex0 = triangle.v0 - ray.origin;
+			float t = Vector3::Dot(toVertex0, triangle.normal) / dirDotNormal;
+
+			// Check if the intersection is within the ray's bounds
+			if (t < ray.min || t > ray.max || (!ignoreHitRecord && t >= hitRecord.t)) {
+				return false;
+			}
+
+			// Calculate intersection point
+			Vector3 P = ray.origin + (ray.direction * t);
+
+			// Edge vectors
+			Vector3 EdgeA = triangle.v1 - triangle.v0;
+			Vector3 EdgeB = triangle.v2 - triangle.v1;
+			Vector3 EdgeC = triangle.v0 - triangle.v2;
+
+			// Vectors from point to vertices
+			Vector3 C0 = P - triangle.v0;
+			Vector3 C1 = P - triangle.v1;
+			Vector3 C2 = P - triangle.v2;
+
+			// Cross products
+			Vector3 CrossA = Vector3::Cross(EdgeA, C0);
+			Vector3 CrossB = Vector3::Cross(EdgeB, C1);
+			Vector3 CrossC = Vector3::Cross(EdgeC, C2);
+
+			// Perform the same-side test to determine if P is inside the triangle
+			if ((Vector3::Dot(triangle.normal, CrossA) < 0) ||
+				(Vector3::Dot(triangle.normal, CrossB) < 0) ||
+				(Vector3::Dot(triangle.normal, CrossC) < 0)) {
+				return false;
+			}
+
+			// At this point, the ray intersects the triangle
+			// If ignoreHitRecord is true, no need to record the hit
+			if (!ignoreHitRecord) {
+				hitRecord.didHit = true;
+				hitRecord.normal = triangle.normal;
+				hitRecord.origin = P;
+				hitRecord.t = t;
+				hitRecord.materialIndex = triangle.materialIndex;
+			}
+
+			return true;
 		}
+
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
 		{
@@ -165,9 +218,20 @@ namespace dae
 #pragma region TriangeMesh HitTest
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
-			return false;
+			bool hitOccurred = false;
+			for (int i{ 0 }; i < mesh.indices.size() / 3; ++i) {
+				Triangle t = { mesh.transformedPositions[mesh.indices[i * 3]], mesh.transformedPositions[mesh.indices[i * 3 + 1 ]], mesh.transformedPositions[mesh.indices[i * 3 + 2]], mesh.transformedNormals[i]};
+				t.cullMode = mesh.cullMode;
+				t.materialIndex = mesh.materialIndex;
+
+				if (HitTest_Triangle(t, ray, hitRecord)) {
+					hitOccurred = true;
+
+					if (!ignoreHitRecord) break;
+				}
+			}
+
+			return hitOccurred;
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)

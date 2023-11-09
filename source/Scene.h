@@ -38,6 +38,7 @@ namespace dae
 		bool DoesHit(const Ray& ray) const;
 
 		const std::vector<Plane>& GetPlaneGeometries() const { return m_PlaneGeometries; }
+		const std::vector<Triangle>& GetTriangles() const { return m_Triangles; }
 		const std::vector<Sphere>& GetSphereGeometries() const { return m_SphereGeometries; }
 		const std::vector<Light>& GetLights() const { return m_Lights; }
 		const std::vector<Material*> GetMaterials() const { return m_Materials; }
@@ -48,6 +49,7 @@ namespace dae
 		std::vector<Plane> m_PlaneGeometries{};
 		std::vector<Sphere> m_SphereGeometries{};
 		std::vector<TriangleMesh> m_TriangleMeshGeometries{};
+		std::vector<Triangle> m_Triangles{};
 		std::vector<Light> m_Lights{};
 		std::vector<Material*> m_Materials{};
 
@@ -110,6 +112,40 @@ namespace dae
 		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
 
 		void Initialize() override;
+	};
+
+	class Scene_W4 final : public Scene
+	{
+	public:
+		Scene_W4() = default;
+		~Scene_W4() override = default;
+
+		Scene_W4(const Scene_W4&) = delete;
+		Scene_W4(Scene_W4&&) noexcept = delete;
+		Scene_W4& operator=(const Scene_W4&) = delete;
+		Scene_W4& operator=(Scene_W4&&) noexcept = delete;
+
+		void Initialize() override;
+		void Update(Timer*) override;
+	private:
+		TriangleMesh* m_Meshes[3]{};
+	};
+
+	class Scene_W4_BunnyScene final : public Scene
+	{
+	public:
+		Scene_W4_BunnyScene() = default;
+		~Scene_W4_BunnyScene() override = default;
+
+		Scene_W4_BunnyScene(const Scene_W4_BunnyScene&) = delete;
+		Scene_W4_BunnyScene(Scene_W4_BunnyScene&&) noexcept = delete;
+		Scene_W4_BunnyScene& operator=(const Scene_W4_BunnyScene&) = delete;
+		Scene_W4_BunnyScene& operator=(Scene_W4_BunnyScene&&) noexcept = delete;
+
+		void Initialize() override;
+		void Update(Timer*) override;
+	private:
+		TriangleMesh* pMesh{};
 	};
 
 

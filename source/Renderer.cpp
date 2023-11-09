@@ -63,8 +63,6 @@ void Renderer::Render(Scene* pScene) const
 				float shadowIncrease = 0.1f;
 				ColorRGB totalLightColor = {};
 
-
-
 				for (const Light& l : lights)
 				{
 					float angleCos = 1.f;
