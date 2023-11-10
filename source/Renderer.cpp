@@ -87,7 +87,7 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 	{
 		bool shadow = false;
 		int amountShadow = 0;
-		float shadowIncrease = 0.1f;
+		const float shadowIncrease = 0.1f;
 		ColorRGB totalLightColor = {};
 
 		for (const Light& l : lights)
@@ -150,16 +150,14 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 
 			if (m_ShadowsEnabled)
 			{
-
 				if (angleCos > 0) {
-					Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f;
+					Vector3 originPointRay = closestHit.origin + closestHit.normal * 0.001f; 
 					Vector3 raydir = LightUtils::GetDirectionToLight(l, originPointRay);
 					float rayMagnitude = raydir.Magnitude();
 					raydir.Normalize();
 
 					Ray raytoLight(originPointRay, raydir);
-					raytoLight.max = rayMagnitude;
-
+					raytoLight.max = rayMagnitude - 0.001f; 
 
 					if (pScene->DoesHit(raytoLight))
 					{
@@ -171,7 +169,6 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 		}
 
 		totalLightColor.MaxToOne();
-		//finalColor = materials[closestHit.materialIndex]->Shade();
 		finalColor += totalLightColor;
 
 		if (shadow)

@@ -50,6 +50,45 @@ namespace dae
 		}
 
 
+		inline bool hitTestSphereGeometric(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord) {
+			Vector3 sphereCenterToRayOrigin = ray.origin - sphere.origin;
+			float tca = Vector3::Dot(sphereCenterToRayOrigin, ray.direction);
+
+			
+			if (tca < 0) {
+				return false;
+			}
+
+			float d2 = Vector3::Dot(sphereCenterToRayOrigin, sphereCenterToRayOrigin) - tca * tca;
+			float radius2 = sphere.radius * sphere.radius;
+
+		
+			if (d2 > radius2) {
+				return false;
+			}
+
+			float thc = sqrtf(radius2 - d2);
+			float t0 = tca - thc;
+			float t1 = tca + thc;
+
+			if (t0 > t1) std::swap(t0, t1);
+
+			if (t0 < 0) {
+				t0 = t1; 
+				if (t0 < 0) return false; 
+			}
+
+			if (t0 >= ray.min && t0 <= ray.max && t0 < hitRecord.t) {
+				hitRecord.t = t0;
+				hitRecord.materialIndex = sphere.materialIndex;
+				hitRecord.didHit = true;
+				hitRecord.origin = ray.origin + ray.direction * t0;
+				hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
+				return true;
+			}
+
+			return false;
+		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
@@ -209,6 +248,7 @@ namespace dae
 		}
 
 
+
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
 		{
 			HitRecord temp{};
@@ -244,21 +284,25 @@ namespace dae
 			if (!SlabTest_TriangleMesh(mesh, ray)) {
 				return false;
 			}
+
 			Triangle t{};
 			bool hitOccurred = false;
+			
 			for (int i{ 0 }; i < mesh.indices.size() / 3; ++i) {
-
+				if (hitOccurred && ignoreHitRecord) {
+					break;
+				}
 				t.v0 = mesh.transformedPositions[mesh.indices[i * 3]];
 				t.v1 = mesh.transformedPositions[mesh.indices[i * 3 + 1]];
 				t.v2 = mesh.transformedPositions[mesh.indices[i * 3 + 2]];
-				t.normal = mesh.transformedNormals[i];
+				t.normal = mesh.transformedNormals[i].Normalized();
 				t.cullMode = mesh.cullMode;
 				t.materialIndex = mesh.materialIndex;
 
 				if (HitTest_Triangle(t, ray, hitRecord)) {
 					hitOccurred = true;
 
-					if (!ignoreHitRecord) break;
+					
 				}
 			}
 

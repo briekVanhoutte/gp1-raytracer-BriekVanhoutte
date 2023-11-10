@@ -37,11 +37,7 @@ namespace dae {
 			GeometryUtils::HitTest_Plane(p, ray, closestHit);
 		}
 
-		for (const Triangle t : m_Triangles) {
-			GeometryUtils::HitTest_Triangle(t, ray, closestHit);
-		}
-
-		for (const TriangleMesh t : m_TriangleMeshGeometries) {
+		for (const TriangleMesh& t : m_TriangleMeshGeometries) {
 			GeometryUtils::HitTest_TriangleMesh(t, ray, closestHit);
 		}
 
@@ -61,10 +57,8 @@ namespace dae {
 				return true;
 			}
 		}
-		for (const Triangle t : m_Triangles) {
-			return GeometryUtils::HitTest_Triangle(t, ray);
-		}
-		for (const TriangleMesh t : m_TriangleMeshGeometries) {
+
+		for (const TriangleMesh& t : m_TriangleMeshGeometries) {
 			return GeometryUtils::HitTest_TriangleMesh(t, ray);
 		}
 
@@ -324,10 +318,11 @@ namespace dae {
 
 	void Scene_W4::Update(Timer* pTimer) {
 		Scene::Update(pTimer);
-		
+
 		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
 		for (const auto m : m_Meshes) {
 			m->RotateY(yawAngle);
+			m->UpdateAABB();
 			m->UpdateTransforms();
 		}
 
@@ -357,7 +352,7 @@ namespace dae {
 		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 
 		//CW Winding Order!
-		
+
 		pMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 
 		Utils::ParseOBJ("Resources/lowpoly_bunny.obj",
@@ -366,7 +361,7 @@ namespace dae {
 			pMesh->indices);
 
 		pMesh->Scale({ 2.f,2.f,2.f });
-		pMesh->RotateY(M_PI );
+		pMesh->RotateY(M_PI);
 		pMesh->UpdateAABB();
 		pMesh->UpdateTransforms();
 
@@ -377,6 +372,12 @@ namespace dae {
 
 	void Scene_W4_BunnyScene::Update(Timer* pTimer) {
 		Scene::Update(pTimer);
+
+		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
+
+		pMesh->RotateY(yawAngle);
+		pMesh->UpdateAABB();
+		pMesh->UpdateTransforms();
 
 	}
 
