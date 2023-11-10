@@ -367,8 +367,8 @@ namespace dae {
 
 		pMesh->Scale({ 2.f,2.f,2.f });
 		pMesh->RotateY(M_PI );
+		pMesh->UpdateAABB();
 		pMesh->UpdateTransforms();
-		
 
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
 		AddPointLight(Vector3{ -2.5f, 5.f, -5.f }, 70.f, ColorRGB{ 1.f, .8f, .45f }); //Front Light Left
