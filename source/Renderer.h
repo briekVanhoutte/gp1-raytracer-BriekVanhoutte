@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "Matrix.h"
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -23,12 +24,16 @@ namespace dae
 		void Update();
 
 		void Render(Scene* pScene) const;
+
+		void RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRation, const Matrix cameraToWorld, const Vector3 cameraOrigin) const;
+
 		bool SaveBufferToImage() const;
 
 		void RenderGradient(int px, int py) const;
 
 		void ToggleShadows();
 		void CycleLightingMode();
+
 
 	private:
 		enum class LightingMode {

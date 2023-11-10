@@ -50,6 +50,45 @@ namespace dae
 		}
 
 
+		inline bool hitTestSphereGeometric(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord) {
+			Vector3 sphereCenterToRayOrigin = ray.origin - sphere.origin;
+			float tca = Vector3::Dot(sphereCenterToRayOrigin, ray.direction);
+
+			
+			if (tca < 0) {
+				return false;
+			}
+
+			float d2 = Vector3::Dot(sphereCenterToRayOrigin, sphereCenterToRayOrigin) - tca * tca;
+			float radius2 = sphere.radius * sphere.radius;
+
+		
+			if (d2 > radius2) {
+				return false;
+			}
+
+			float thc = sqrtf(radius2 - d2);
+			float t0 = tca - thc;
+			float t1 = tca + thc;
+
+			if (t0 > t1) std::swap(t0, t1);
+
+			if (t0 < 0) {
+				t0 = t1; 
+				if (t0 < 0) return false; 
+			}
+
+			if (t0 >= ray.min && t0 <= ray.max && t0 < hitRecord.t) {
+				hitRecord.t = t0;
+				hitRecord.materialIndex = sphere.materialIndex;
+				hitRecord.didHit = true;
+				hitRecord.origin = ray.origin + ray.direction * t0;
+				hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
+				return true;
+			}
+
+			return false;
+		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
@@ -209,6 +248,7 @@ namespace dae
 		}
 
 
+
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
 		{
 			HitRecord temp{};
@@ -216,18 +256,53 @@ namespace dae
 		}
 #pragma endregion
 #pragma region TriangeMesh HitTest
+		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray) {
+			float tx1 = (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x;
+			float tx2 = (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x;
+
+			float tmin = std::min(tx1, tx2);
+			float tmax = std::max(tx1, tx2);
+
+			float ty1 = (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y;
+			float ty2 = (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y;
+
+			tmin = std::max(tmin, std::min(ty1, ty2));
+			tmax = std::min(tmax, std::max(ty1, ty2));
+
+			float tz1 = (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z;
+			float tz2 = (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z;
+
+			tmin = std::max(tmin, std::min(tz1, tz2));
+			tmax = std::min(tmax, std::max(tz1, tz2));
+
+			return tmax > 0 && tmax >= tmin;
+		}
+
+		
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
+			if (!SlabTest_TriangleMesh(mesh, ray)) {
+				return false;
+			}
+
+			Triangle t{};
 			bool hitOccurred = false;
+			
 			for (int i{ 0 }; i < mesh.indices.size() / 3; ++i) {
-				Triangle t = { mesh.transformedPositions[mesh.indices[i * 3]], mesh.transformedPositions[mesh.indices[i * 3 + 1 ]], mesh.transformedPositions[mesh.indices[i * 3 + 2]], mesh.transformedNormals[i]};
+				if (hitOccurred && ignoreHitRecord) {
+					break;
+				}
+				t.v0 = mesh.transformedPositions[mesh.indices[i * 3]];
+				t.v1 = mesh.transformedPositions[mesh.indices[i * 3 + 1]];
+				t.v2 = mesh.transformedPositions[mesh.indices[i * 3 + 2]];
+				t.normal = mesh.transformedNormals[i].Normalized();
 				t.cullMode = mesh.cullMode;
 				t.materialIndex = mesh.materialIndex;
 
 				if (HitTest_Triangle(t, ray, hitRecord)) {
 					hitOccurred = true;
 
-					if (!ignoreHitRecord) break;
+					
 				}
 			}
 
@@ -239,6 +314,8 @@ namespace dae
 			HitRecord temp{};
 			return HitTest_TriangleMesh(mesh, ray, temp, true);
 		}
+
+
 #pragma endregion
 	}
 
