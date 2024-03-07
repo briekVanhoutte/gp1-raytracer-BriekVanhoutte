@@ -4,4 +4,3 @@ This project contains the start code for the raytracer being built in the first 
 
 The main dependency is SDL, which is already included in the directory.
 
-When encountering bugs or issues, please contact either flor.delombaerde@howest.be or pieter-jan.vandenberghe@howest.be
